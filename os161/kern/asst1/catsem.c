@@ -73,7 +73,7 @@ void catEatBowl(struct semaphore* bowlSem, unsigned long catnumber,
         int bowlNum, struct semaphore* anotherSem) {
 
 
-    Pcat(bowlSem, anotherSem); //check which bowl is empty and acquire it, I think...
+    Pcat(bowlSem, anotherSem); //check which bowl is empty and acquire it. Also, the if one bowl is empty, the other bowl must be occupied by a cat
 
     sem_eat("cat", catnumber, bowlNum, curthread->iteration); //eat from tis bowl
 
