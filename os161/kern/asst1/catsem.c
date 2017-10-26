@@ -66,20 +66,20 @@
 /* who should be "cat" or "mouse" */
 
 
-struct semaphore* B1sem;
+struct semaphore* B1sem; //2 bowls
 struct semaphore* B2sem;
 
 void catEatBowl(struct semaphore* bowlSem, unsigned long catnumber,
         int bowlNum, struct semaphore* anotherSem) {
 
 
-    Pcat(bowlSem, anotherSem);
+    Pcat(bowlSem, anotherSem); //check which bowl is empty and acquire it, I think...
 
-    sem_eat("cat", catnumber, bowlNum, curthread->iteration);
+    sem_eat("cat", catnumber, bowlNum, curthread->iteration); //eat from tis bowl
 
-    Vcat(bowlSem, anotherSem);
+    Vcat(bowlSem, anotherSem); //leave the bowl
 
-    curthread->iteration++;
+    curthread->iteration++; //this cat has eaten n times 
 }
 
 void mouseEatBowl(struct semaphore* bowlSem, unsigned long mousenumber,
@@ -132,12 +132,12 @@ static void catsem(void * unusedpointer,
 
 
 
-    while (curthread->iteration < 3) {
+    while (curthread->iteration < 3) { //Eat 3 times and leave
 
 
 
-        catEatBowl(B2sem, catnumber, 2, B1sem);
-        catEatBowl(B1sem, catnumber, 1, B2sem);
+        catEatBowl(B2sem, catnumber, 2, B1sem); //Choose an empty bowl to eat from, eat 3 times
+        catEatBowl(B1sem, catnumber, 1, B2sem); 
 
 
 
