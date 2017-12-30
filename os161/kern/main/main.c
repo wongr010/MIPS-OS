@@ -60,7 +60,7 @@ boot(void)
 	 * anything at all. You can make it larger though (it's in
 	 * dev/generic/console.c).
 	 */
-
+    kprintf("booting...");
 	kprintf("\n");
 	kprintf("OS/161 base system version %s\n", BASE_VERSION);
 	kprintf("%s", harvard_copyright);
@@ -75,12 +75,16 @@ boot(void)
 
 DEBUG(DB_VM, "VM free pages: %u\n", GROUP_VERSION);
 
-	ram_bootstrap();
+	//coremap initialize
+                ram_bootstrap();
+               
 	scheduler_bootstrap();
 	thread_bootstrap();
 	vfs_bootstrap();
 	dev_bootstrap();
 	vm_bootstrap();
+        
+               // coremap_bootstrap();
 	kprintf_bootstrap();
 
 	/* Default bootfs - but ignore failure, in case emu0 doesn't exist */
@@ -163,6 +167,7 @@ sys_reboot(int code)
 int
 kmain(char *arguments)
 {
+                  init_processtable();
 	boot();
 
 	menu(arguments);

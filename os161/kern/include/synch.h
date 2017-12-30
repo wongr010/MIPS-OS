@@ -38,7 +38,7 @@ Vcat(struct semaphore *curSem, struct semaphore *anotherSem);
 void
 Vmouse(struct semaphore *curSem, struct semaphore *anotherSem);
 
-/*
+/* 
  * Simple lock for mutual exclusion.
  * Operations:
  *    lock_acquire - Get the lock. Only one thread can hold the lock at the

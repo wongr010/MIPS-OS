@@ -2,9 +2,12 @@
 #define _ADDRSPACE_H_
 
 #include <vm.h>
+#include "synch.h"
 #include "opt-dumbvm.h"
 
-struct vnode;
+
+
+
 
 /* 
  * Address space - data structure associated with the virtual memory
@@ -13,19 +16,49 @@ struct vnode;
  * You write this.
  */
 
+
+/*
+ * todo:
+ * addr_region: pte
+ * 
+ 
+ 
+ 
+ */
+
+struct coremapEntry* coremap;
+
+struct addrspace_region {
+    vaddr_t vstart;
+    vaddr_t vend; //only needed for stack and heap
+    size_t numofpages;
+    paddr_t pstart;
+    paddr_t pend; //only needed for stack
+    //int perm; //0 is r/w, 1 is r/w/e
+    struct pte* pagetable;
+    
+    vaddr_t vend_actual; // for heap
+
+};
+
 struct addrspace {
 #if OPT_DUMBVM
-	vaddr_t as_vbase1;
-	paddr_t as_pbase1;
-	size_t as_npages1;
-	vaddr_t as_vbase2;
-	paddr_t as_pbase2;
-	size_t as_npages2;
-	paddr_t as_stackpbase;
+    vaddr_t as_vbase1;
+    paddr_t as_pbase1;
+    size_t as_npages1;
+    vaddr_t as_vbase2;
+    paddr_t as_pbase2;
+    size_t as_npages2;
+    paddr_t as_stackpbase;
 #else
-	/* Put stuff here for your VM system */
-#endif
+    struct addrspace_region *text;
+    struct addrspace_region *data;
+    struct addrspace_region *heap;
+    struct addrspace_region *stack;
+
+#endif          
 };
+
 
 /*
  * Functions in addrspace.c:
@@ -62,18 +95,21 @@ struct addrspace {
  */
 
 struct addrspace *as_create(void);
-int               as_copy(struct addrspace *src, struct addrspace **ret);
-void              as_activate(struct addrspace *);
-void              as_destroy(struct addrspace *);
+int as_define_region(struct addrspace *as,
+        vaddr_t vaddr, size_t sz,
+        int readable,
+        int writeable,
+        int executable);
+int as_prepare_load(struct addrspace *as);
 
-int               as_define_region(struct addrspace *as, 
-				   vaddr_t vaddr, size_t sz,
-				   int readable, 
-				   int writeable,
-				   int executable);
-int		  as_prepare_load(struct addrspace *as);
-int		  as_complete_load(struct addrspace *as);
-int               as_define_stack(struct addrspace *as, vaddr_t *initstackptr);
+int as_copy(struct addrspace *src, struct addrspace **ret);
+void as_activate(struct addrspace *);
+void as_destroy(struct addrspace *);
+
+
+
+int as_complete_load(struct addrspace *as);
+int as_define_stack(struct addrspace *as, vaddr_t *initstackptr);
 
 /*
  * Functions in loadelf.c
@@ -85,4 +121,33 @@ int               as_define_stack(struct addrspace *as, vaddr_t *initstackptr);
 int load_elf(struct vnode *v, vaddr_t *entrypoint);
 
 
+void free_coremap();
+void free_addrspace(struct addrspace *as);
+void free_addrspace_region(struct addrspace_region *region);
+//paddr_t free_addrspace_region(struct addrspace_region *region, int *numofpages);
+void print_coremap(); // print the current status of the coremap, to indicate if a page frame is allocated
+void print_addrspace_region(struct addrspace_region* region);
+void print_addrspace(struct addrspace* as);
+
+// pagetable functions:
+void pagetable_initialize(struct addrspace_region* region);
+int access_pagetable(struct addrspace_region* region, vaddr_t faultaddress, int spl);
+void free_pagetable(struct addrspace *as);
+
+
 #endif /* _ADDRSPACE_H_ */
+
+
+
+
+// TO DO:
+/*
+ * as_copy
+ * 
+ * CRASH?
+ * 
+ * malloc: sbrk
+ * 
+ * big program
+ * 
+ */

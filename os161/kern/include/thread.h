@@ -7,39 +7,76 @@
 
 /* Get machine-dependent stuff */
 #include <machine/pcb.h>
+#include <synch.h>
+#define TOTAL_PROCESSES 128
+
+#define EXITED 1
+#define DOES_NOT_EXIST 0
+
+// global stuff for menu
+
+extern struct thread *menuth;
+extern struct lock *menusleep;
+extern struct cv *menucv;
 
 
 struct addrspace;
 
 struct thread {
-	/**********************************************************/
-	/* Private thread members - internal to the thread system */
-	/**********************************************************/
-	
-	struct pcb t_pcb;
-	char *t_name;
-	const void *t_sleepaddr;
-	char *t_stack;
-	
-	/**********************************************************/
-	/* Public thread members - can be used by other code      */
-	/**********************************************************/
-	
-	/*
-	 * This is public because it isn't part of the thread system,
-	 * and will need to be manipulated by the userprog and/or vm
-	 * code.
-	 */
-	struct addrspace *t_vmspace;
+    /**********************************************************/
+    /* Private thread members - internal to the thread system */
+    /**********************************************************/
 
-	/*
-	 * This is public because it isn't part of the thread system,
-	 * and is manipulated by the virtual filesystem (VFS) code.
-	 */
-	struct vnode *t_cwd;
+    struct pcb t_pcb;
+    char *t_name;
+    const void *t_sleepaddr;
+    char *t_stack;
+    int threadPID;
+    int threadparentPID;
 
-	int iteration;
+
+    /**********************************************************/
+    /* Public thread members - can be used by other code      */
+    /**********************************************************/
+
+    /*
+     * This is public because it isn't part of the thread system,
+     * and will need to be manipulated by the userprog and/or vm
+     * code.
+     */
+    struct addrspace *t_vmspace;
+    
+  
+
+    /*
+     * This is public because it isn't part of the thread system,
+     * and is manipulated by the virtual filesystem (VFS) code.
+     */
+    struct vnode *t_cwd;
+
+    int iteration;
 };
+
+struct process {
+    int PID;
+    
+   
+    struct thread *processthread;
+    int occupied;
+    int exited;
+    int exitcode;
+    int waiting;
+    int parentPID;
+    struct lock *exitpermission;
+    struct cv *exitcv;
+
+};
+
+struct process table[128];
+
+
+
+int noprocesses; //testing purposes
 
 /* Call once during startup to allocate data structures. */
 struct thread *thread_bootstrap(void);
@@ -60,16 +97,18 @@ void thread_shutdown(void);
  * general the child thread might exit at any time.) Returns an error
  * code.
  */
-int thread_fork(const char *name, 
-		void *data1, unsigned long data2, 
-		void (*func)(void *, unsigned long),
-		struct thread **ret);
+int thread_fork(const char *name,
+        void *data1, unsigned long data2,
+        void (*func)(void *, unsigned long),
+        struct thread **ret);
 
 /*
  * Cause the current thread to exit.
  * Interrupts need not be disabled.
  */
 void thread_exit(void);
+
+void init_processtable();
 
 /*
  * Cause the current thread to yield to the next runnable thread, but
@@ -106,8 +145,8 @@ int thread_hassleepers(const void *addr);
  */
 
 /* Machine independent entry point for new threads. */
-void mi_threadstart(void *data1, unsigned long data2, 
-		    void (*func)(void *, unsigned long));
+void mi_threadstart(void *data1, unsigned long data2,
+        void (*func)(void *, unsigned long));
 
 /* Machine dependent context switch. */
 void md_switch(struct pcb *old, struct pcb *nu);
